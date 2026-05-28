@@ -9,12 +9,11 @@ class VirtualSynth {
     this.oscillators = [];
     this.gainNode = null;
     this.isPlaying = false;
-    this.demoMode = true;  // Auto-enable demo mode
     this.sensitivity = 1.5;
     this.time = 0;
     this.fftData = new Uint8Array(128);
-    // Pre-fill with some demo data so visualizer isn't blank on load
-    this.generateDemoFrame(0);
+    // Pre-fill with demo data so visualizer isn't blank on load
+    this.generateFrame(performance.now());
   }
 
   init() {
@@ -51,8 +50,8 @@ class VirtualSynth {
     this.isPlaying = false;
   }
 
-  // Demo mode: generate spectrum data without requiring video playback
-  generateDemoFrame(timestamp) {
+  // Generate virtual spectrum data (core algorithm)
+  generateFrame(timestamp) {
     this.time = (timestamp || performance.now()) / 1000;
 
     for (let i = 0; i < this.fftData.length; i++) {
@@ -85,61 +84,12 @@ class VirtualSynth {
     }
   }
 
-  // Generate virtual spectrum data using mathematical functions
-  generateFrame(timestamp) {
-    if (this.demoMode || !this.isPlaying) {
-      // Demo mode or paused: generate synthetic data (no decay)
-      this.generateDemoFrame(timestamp);
-      return;
-    }
-
-    this.time = timestamp / 1000; // Convert to seconds
-
-    // Generate 128 frequency bins
-    for (let i = 0; i < this.fftData.length; i++) {
-      let value = 0;
-
-      // Bass frequencies (low indices) - strong pulsing
-      if (i < 20) {
-        const bass = Math.sin(this.time * Math.PI * 2 * 2) * 0.5;
-        const sub = Math.sin(this.time * Math.PI * 2 * 1.5) * 0.3;
-        value = (bass + sub) * this.sensitivity;
-      }
-      // Mid frequencies
-      else if (i < 60) {
-        const mid = Math.sin(this.time * Math.PI * 2 * (4 + i * 0.1)) * 0.4;
-        const harmony = Math.cos(this.time * Math.PI * 2 * (6 + i * 0.05)) * 0.2;
-        value = (mid + harmony) * this.sensitivity;
-      }
-      // High frequencies
-      else {
-        const high = (Math.random() - 0.5) * 0.3;
-        const shimmer = Math.sin(this.time * Math.PI * 2 * (10 + i * 0.2)) * 0.1;
-        value = (high + shimmer) * this.sensitivity;
-      }
-
-      // Add some randomness for realism
-      value += (Math.random() - 0.5) * 0.1;
-
-      // Normalize to 0-255 range
-      this.fftData[i] = Math.max(0, Math.min(255, (value + 1) * 127.5));
-    }
-  }
-
-  // Enable demo mode (always generate spectrum regardless of playback state)
-  enableDemoMode() {
-    this.demoMode = true;
-  }
-
-  // Disable demo mode (require video playback for spectrum)
-  disableDemoMode() {
-    this.demoMode = false;
-  }
-
+  // Get current frequency data
   getFrequencyData() {
     return this.fftData;
   }
 
+  // Set sensitivity multiplier
   setSensitivity(value) {
     this.sensitivity = parseFloat(value);
   }
