@@ -21,8 +21,28 @@
       </div>
     </header>
 
+    <!-- Mode Toggle -->
+    <div class="mode-toggle">
+      <button class="mode-btn active" data-mode="virtual">🎹 虚拟模式</button>
+      <button class="mode-btn" data-mode="local">🎵 本地音频</button>
+      <button class="mode-btn" data-mode="iframe">📺 视频嵌入</button>
+    </div>
+
+    <!-- Local Audio Upload -->
+    <div class="local-audio-container" id="local-audio-container" style="display:none;">
+      <div class="drop-zone" id="drop-zone">
+        <p>🎵 拖拽音频文件到这里，或点击选择</p>
+        <p class="hint">支持 MP3, WAV, OGG, M4A 格式</p>
+        <input type="file" id="audio-file-input" accept="audio/*" style="display:none">
+      </div>
+      <div class="audio-info" id="audio-info" style="display:none;">
+        <span id="audio-file-name"></span>
+        <button id="remove-audio-btn">✕ 移除</button>
+      </div>
+    </div>
+
     <!-- iframe Player -->
-    <div class="player-container">
+    <div class="player-container" id="player-container">
       <div class="iframe-wrapper">
         <iframe id="player-iframe" allow="autoplay; encrypted-media" allowfullscreen></iframe>
       </div>
@@ -63,6 +83,7 @@
   </div>
 
   <script src="js/synth.js"></script>
+  <script src="js/analyzer.js"></script>
   <script src="js/visualizer.js"></script>
   <script src="js/main.js"></script>
 </body>

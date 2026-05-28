@@ -86,6 +86,98 @@ body {
   background: var(--accent-hover);
 }
 
+/* ===== Mode Toggle ===== */
+.mode-toggle {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 20px;
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border);
+}
+
+.mode-btn {
+  background: var(--bg-tertiary);
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 6px 16px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  transition: all 0.2s;
+}
+
+.mode-btn.active {
+  background: var(--accent);
+  color: white;
+  border-color: var(--accent);
+}
+
+.mode-btn:hover:not(.active) {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+/* ===== Local Audio Upload ===== */
+.local-audio-container {
+  padding: 12px 20px;
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border);
+}
+
+.drop-zone {
+  border: 2px dashed var(--border);
+  border-radius: 8px;
+  padding: 24px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.drop-zone:hover {
+  border-color: var(--accent);
+  background: rgba(168, 85, 247, 0.05);
+}
+
+.drop-zone p {
+  color: var(--text-primary);
+  font-size: 1rem;
+  margin-bottom: 4px;
+}
+
+.drop-zone .hint {
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+}
+
+.audio-info {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 8px 0;
+}
+
+.audio-info span {
+  color: var(--text-primary);
+  font-size: 0.9rem;
+}
+
+#remove-audio-btn {
+  background: var(--bg-tertiary);
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 4px 10px;
+  cursor: pointer;
+  font-size: 0.8rem;
+}
+
+#remove-audio-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
 /* ===== Player Container ===== */
 .player-container {
   padding: 12px 20px;

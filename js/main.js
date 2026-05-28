@@ -1,6 +1,6 @@
 /**
  * Main Application Logic
- * Handles player communication, UI events, and animation loop
+ * Handles mode switching, player communication, UI events, and animation loop
  */
 class MusicVisualizerApp {
   constructor() {
@@ -8,13 +8,23 @@ class MusicVisualizerApp {
     this.platformSelect = document.getElementById('platform-select');
     this.urlInput = document.getElementById('url-input');
     this.loadBtn = document.getElementById('load-btn');
+    this.playerContainer = document.getElementById('player-container');
     this.playerIframe = document.getElementById('player-iframe');
+    this.localAudioContainer = document.getElementById('local-audio-container');
+    this.dropZone = document.getElementById('drop-zone');
+    this.audioFileInput = document.getElementById('audio-file-input');
+    this.audioInfo = document.getElementById('audio-info');
+    this.audioFileName = document.getElementById('audio-file-name');
+    this.removeAudioBtn = document.getElementById('remove-audio-btn');
     this.sensitivitySlider = document.getElementById('sensitivity');
     this.sensitivityValue = document.getElementById('sensitivity-value');
     this.fullscreenBtn = document.getElementById('fullscreen-btn');
     
     // Initialize components
     this.synth = new VirtualSynth();
+    this.analyzer = new RealAudioAnalyzer();
+    this.currentMode = 'virtual'; // virtual, local, iframe
+    
     this.canvas = document.getElementById('visualizer');
     this.visualizer = new Visualizer(this.canvas);
     
@@ -30,12 +40,57 @@ class MusicVisualizerApp {
   }
 
   bindEvents() {
-    // Load button
-    this.loadBtn.addEventListener('click', () => this.loadVideo());
+    // Mode toggle buttons
+    document.querySelectorAll('.mode-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        this.switchMode(btn.dataset.mode);
+      });
+    });
     
     // URL input enter key
     this.urlInput.addEventListener('keypress', (e) => {
       if (e.key === 'Enter') this.loadVideo();
+    });
+    
+    // Load button (for iframe mode)
+    this.loadBtn.addEventListener('click', () => this.loadVideo());
+    
+    // Drag & drop for local audio
+    this.dropZone.addEventListener('click', () => {
+      this.audioFileInput.click();
+    });
+    
+    this.dropZone.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      this.dropZone.style.borderColor = 'var(--accent)';
+    });
+    
+    this.dropZone.addEventListener('dragleave', () => {
+      this.dropZone.style.borderColor = '';
+    });
+    
+    this.dropZone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      this.dropZone.style.borderColor = '';
+      const file = e.dataTransfer.files[0];
+      if (file && file.type.startsWith('audio/')) {
+        this.loadLocalAudio(file);
+      }
+    });
+    
+    this.audioFileInput.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        this.loadLocalAudio(file);
+      }
+    });
+    
+    this.removeAudioBtn.addEventListener('click', () => {
+      this.analyzer.destroy();
+      this.dropZone.style.display = '';
+      this.audioInfo.style.display = 'none';
     });
     
     // Effect buttons
@@ -81,7 +136,52 @@ class MusicVisualizerApp {
     // Initialize audio context on first user interaction
     document.addEventListener('click', () => {
       this.synth.init();
+      this.analyzer.init();
     }, { once: true });
+  }
+
+  switchMode(mode) {
+    this.currentMode = mode;
+    
+    // Hide all containers
+    this.playerContainer.style.display = 'none';
+    this.localAudioContainer.style.display = 'none';
+    this.urlInput.parentElement.style.display = 'none';
+    
+    switch(mode) {
+      case 'virtual':
+        // Virtual mode: math-generated spectrum
+        this.analyzer.destroy();
+        break;
+        
+      case 'local':
+        // Local audio mode: real FFT analysis
+        this.localAudioContainer.style.display = '';
+        this.dropZone.style.display = '';
+        this.audioInfo.style.display = 'none';
+        break;
+        
+      case 'iframe':
+        // iframe mode: show player + virtual spectrum synced with playback
+        this.playerContainer.style.display = '';
+        this.urlInput.parentElement.style.display = '';
+        break;
+    }
+  }
+
+  async loadLocalAudio(file) {
+    try {
+      await this.analyzer.loadAudio(file);
+      this.analyzer.play();
+      
+      // Update UI
+      this.audioFileName.textContent = file.name;
+      this.dropZone.style.display = 'none';
+      this.audioInfo.style.display = 'flex';
+    } catch(e) {
+      console.error('Failed to load audio:', e);
+      alert('音频加载失败，请尝试其他格式');
+    }
   }
 
   loadVideo() {
@@ -104,7 +204,6 @@ class MusicVisualizerApp {
   }
 
   extractYouTubeId(url) {
-    // Support various YouTube URL formats
     const patterns = [
       /(?:youtube\.com\/watch\?v=)([^\&\?\/]+)/,
       /(?:youtu\.be\/)([^\&\?\/]+)/,
@@ -117,7 +216,6 @@ class MusicVisualizerApp {
       if (match) return match[1];
     }
     
-    // If it looks like a video ID
     if (/^[a-zA-Z0-9_-]{11}$/.test(url)) return url;
     
     return null;
@@ -128,14 +226,12 @@ class MusicVisualizerApp {
     const match = url.match(pattern);
     if (match) return match[1];
     
-    // If it looks like a BV ID
     if (/^BV[a-zA-Z0-9]+/.test(url)) return url;
     
     return null;
   }
 
   handleMessage(event) {
-    // Handle YouTube iframe messages
     if (event.data && typeof event.data === 'object') {
       if (event.data.event === 'ready') {
         this.isPlayerReady = true;
@@ -144,7 +240,6 @@ class MusicVisualizerApp {
       
       if (event.data.event === 'stateChange') {
         const state = event.data.info;
-        // YT.PlayerState: -1(unstarted), 0(ended), 1(playng), 2(paused), 3(buffering), 5(cued)
         if (state === 1) {
           this.isPlaying = true;
           this.synth.start();
@@ -169,14 +264,18 @@ class MusicVisualizerApp {
   }
 
   animate() {
-    // Generate spectrum data
-    this.synth.generateFrame(performance.now());
+    let spectrumData;
     
-    // Get frequency data and render
-    const spectrumData = this.synth.getFrequencyData();
+    if (this.currentMode === 'local' && this.analyzer.isConnected) {
+      // Real audio analysis mode
+      spectrumData = this.analyzer.getFrequencyData();
+    } else {
+      // Virtual mode or iframe mode
+      this.synth.generateFrame(performance.now());
+      spectrumData = this.synth.getFrequencyData();
+    }
+    
     this.visualizer.render(spectrumData);
-    
-    // Continue animation loop
     requestAnimationFrame(() => this.animate());
   }
 }
