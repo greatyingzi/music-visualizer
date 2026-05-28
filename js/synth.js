@@ -12,8 +12,6 @@ class VirtualSynth {
     this.sensitivity = 1.5;
     this.time = 0;
     this.fftData = new Uint8Array(128);
-    // Pre-fill with demo data so visualizer isn't blank on load
-    this.generateFrame(performance.now());
   }
 
   init() {

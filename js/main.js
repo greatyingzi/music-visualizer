@@ -23,7 +23,7 @@ class MusicVisualizerApp {
     // Initialize components
     this.synth = new VirtualSynth();
     this.analyzer = new RealAudioAnalyzer();
-    this.currentMode = 'virtual'; // virtual, local, iframe
+    this.currentMode = 'idle'; // idle, virtual, local, iframe
     
     this.canvas = document.getElementById('visualizer');
     this.visualizer = new Visualizer(this.canvas);
@@ -31,12 +31,41 @@ class MusicVisualizerApp {
     // State
     this.isPlayerReady = false;
     this.isPlaying = false;
+    this.isAnimating = false; // Animation only starts when user takes action
+    
+    // Show idle message on canvas
+    this.showIdleMessage();
     
     // Bind events
     this.bindEvents();
     
-    // Start animation loop
-    this.animate();
+    // Do NOT start animation loop yet - wait for user action
+  }
+
+  showIdleMessage() {
+    const ctx = this.visualizer.ctx;
+    const w = this.canvas.width;
+    const h = this.canvas.height;
+    
+    // Clear canvas
+    ctx.fillStyle = '#000';
+    ctx.fillRect(0, 0, w, h);
+    
+    // Draw idle message
+    ctx.fillStyle = '#666';
+    ctx.font = '18px -apple-system, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('🎵 请选择模式并开始', w / 2, h / 2 - 12);
+    ctx.font = '14px -apple-system, sans-serif';
+    ctx.fillText('虚拟模式 / 本地音频 / 视频嵌入', w / 2, h / 2 + 18);
+  }
+
+  startAnimation() {
+    if (!this.isAnimating) {
+      this.isAnimating = true;
+      this.animate();
+    }
   }
 
   bindEvents() {
@@ -152,6 +181,7 @@ class MusicVisualizerApp {
       case 'virtual':
         // Virtual mode: math-generated spectrum
         this.analyzer.destroy();
+        this.startAnimation();
         break;
         
       case 'local':
@@ -159,12 +189,14 @@ class MusicVisualizerApp {
         this.localAudioContainer.style.display = '';
         this.dropZone.style.display = '';
         this.audioInfo.style.display = 'none';
+        // Animation starts when audio is loaded
         break;
         
       case 'iframe':
         // iframe mode: show player + virtual spectrum synced with playback
         this.playerContainer.style.display = '';
         this.urlInput.parentElement.style.display = '';
+        this.startAnimation();
         break;
     }
   }
@@ -173,6 +205,9 @@ class MusicVisualizerApp {
     try {
       await this.analyzer.loadAudio(file);
       this.analyzer.play();
+      
+      // Start animation when audio is loaded
+      this.startAnimation();
       
       // Update UI
       this.audioFileName.textContent = file.name;
@@ -265,6 +300,12 @@ class MusicVisualizerApp {
 
   animate() {
     let spectrumData;
+    
+    if (this.currentMode === 'idle') {
+      // Idle mode: don't render, just keep loop alive
+      requestAnimationFrame(() => this.animate());
+      return;
+    }
     
     if (this.currentMode === 'local' && this.analyzer.isConnected) {
       // Real audio analysis mode
