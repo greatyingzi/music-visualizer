@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🎵 Music Visualizer</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div class="app">
+    <!-- Header -->
+    <header class="header">
+      <div class="logo">🎵 Music Visualizer</div>
+      <div class="url-input-group">
+        <select id="platform-select">
+          <option value="youtube">YouTube</option>
+          <option value="bilibili">Bilibili</option>
+        </select>
+        <input type="text" id="url-input" placeholder="粘贴视频链接..." />
+        <button id="load-btn">加载</button>
+      </div>
+    </header>
+
+    <!-- iframe Player -->
+    <div class="player-container">
+      <div class="iframe-wrapper">
+        <iframe id="player-iframe" allow="autoplay; encrypted-media" allowfullscreen></iframe>
+      </div>
+    </div>
+
+    <!-- Canvas Visualization -->
+    <div class="canvas-container">
+      <canvas id="visualizer"></canvas>
+    </div>
+
+    <!-- Controls -->
+    <div class="controls">
+      <div class="effect-buttons">
+        <button class="effect-btn active" data-effect="bars">频谱柱</button>
+        <button class="effect-btn" data-effect="wave">波形图</button>
+        <button class="effect-btn" data-effect="circle">圆形频谱</button>
+        <button class="effect-btn" data-effect="particles">粒子系统</button>
+      </div>
+      
+      <div class="control-group">
+        <label>灵敏度</label>
+        <input type="range" id="sensitivity" min="0.5" max="3" step="0.1" value="1.5">
+        <span id="sensitivity-value" class="value-badge">1.5</span>
+      </div>
+      
+      <div class="control-group">
+        <label>主题色</label>
+        <div class="theme-selector">
+          <button class="theme-btn active" data-theme="neon-purple" style="--color: #a855f7"></button>
+          <button class="theme-btn" data-theme="flame-orange" style="--color: #f97316"></button>
+          <button class="theme-btn" data-theme="ocean-blue" style="--color: #0ea5e9"></button>
+          <button class="theme-btn" data-theme="aurora-green" style="--color: #22c55e"></button>
+        </div>
+      </div>
+      
+      <button id="fullscreen-btn">⛶ 全屏</button>
+    </div>
+  </div>
+
+  <script src="js/synth.js"></script>
+  <script src="js/visualizer.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>
